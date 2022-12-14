@@ -13,7 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Build
       run: ./build.sh
       shell: bash
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Artifacts
+        path: out
