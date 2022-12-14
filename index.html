@@ -12,7 +12,7 @@
 
 <script src="/out/libtiff-wasm.raw.js"></script>
 <script type="module">
-    import { TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImage, TIFFGetField, TIFFMalloc, TIFFFree } from './out/libtiff-wasm.js';
+    import { TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImageOriented, TIFFGetField, TIFFMalloc, TIFFFree } from './out/libtiff-wasm.js';
 
     document.querySelector('input').addEventListener('change', async (event) => {
         const disposables = [];
@@ -42,7 +42,7 @@
 
             const stopOnError = true;
 
-            if (!TIFFReadRGBAImage(tif, width, height, raster, stopOnError)) {
+            if (!TIFFReadRGBAImageOriented(tif, width, height, raster, 1, stopOnError)) {
                 throw "TIFFReadRGBAImage failed";
             }
 

@@ -232,4 +232,4 @@ export const TIFFGetStringField = Module.cwrap("GetStringField", "string", ["num
 
 export const TIFFReadRGBAImage = Module.cwrap("TIFFReadRGBAImage", "number", ["number", "number", "number", "number", "number"]);
 
-export const TIFFReadRGBAImageOriented = Module.cwrap("TIFFReadRGBAImage", "number", ["number", "number", "number", "number", "number", "number"]);
+export const TIFFReadRGBAImageOriented = Module.cwrap("TIFFReadRGBAImageOriented", "number", ["number", "number", "number", "number", "number", "number"]);
