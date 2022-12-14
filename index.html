@@ -11,9 +11,9 @@
 
 </body>
 
-<script src="/tiff.raw.js"></script>
+<script src="/out/libtiff-wasm.raw.js"></script>
 <script type="module">
-    import { TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImage, TIFFGetField, TIFFMalloc, TIFFFree } from './tiff.js';
+    import { TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImage, TIFFGetField, TIFFMalloc, TIFFFree } from './out/libtiff-wasm.js';
 
     document.querySelector('input').addEventListener('change', async (event) => {
         const disposables = [];
@@ -43,16 +43,19 @@
             console.log("Reading tiff image");
             if (TIFFReadRGBAImage(tif, width, height, raster, stopOnError)) {
                 console.log("Creating Uint8ClampedArray");
-                const data = new Uint8ClampedArray(Module.HEAPU8.buffer, raster, nrOfPixels * uint32Size);
-                console.log("Creating ImageData");
-                const imageData = new ImageData(data, width, height);
+                // const data = HEAPU8.subarray(raster, raster + width * height * 4);
+                // const data = new Uint8ClampedArray(Module.HEAPU8.buffer, raster, nrOfPixels * uint32Size);
+                // console.log("Creating ImageData");
+                // const imageData = new ImageData(data, width, height);
                 console.log("Creating Canvas");
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
                 document.body.appendChild(canvas);
                 const ctx = canvas.getContext("2d");
-                ctx.putImageData(imageData, 0, 0);
+                const image = ctx.getImageData(0, 0, width, height);
+                image.data.set(HEAPU8.subarray(raster, raster + width * height * 4));
+                ctx.putImageData(image, 0, 0);
             }
             else {
                 throw "TIFFReadRGBAImage failed";
