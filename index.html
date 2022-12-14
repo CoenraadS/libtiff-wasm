@@ -2,13 +2,12 @@
 <html>
 
 <head>
-    <title>wasm-vips</title>
+    <title>LibTIFF-wasm</title>
 </head>
 
 <body>
-
-    <input type="file" id="image" name="image" accept="image/tif, image/tiff">
-
+    <input type="file" id="image" name="image" accept="image/tif, image/tiff" style="display: block">
+    <canvas id="canvas"></canvas>
 </body>
 
 <script src="/out/libtiff-wasm.raw.js"></script>
@@ -54,10 +53,9 @@
 
             const imageData = new ImageData(data, width, height);
 
-            const canvas = document.createElement('canvas');
+            const canvas = document.getElementById('canvas');
             canvas.width = width;
             canvas.height = height;
-            document.body.appendChild(canvas);
             const ctx = canvas.getContext("2d");
             ctx.putImageData(imageData, 0, 0);
             console.timeEnd("Tiff Display");
