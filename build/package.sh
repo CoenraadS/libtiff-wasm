@@ -9,7 +9,6 @@ OUTPUT_DIR="/out"
 emcc -o ${OUTPUT_DIR}/libtiff-wasm.raw.js \
     -I ${TMP_DIR}/tiff-${LIBTIFF_PKGVER}/libtiff \
     --memory-init-file 0 \
-    --bind -l"workerfs.js" \
     -s FORCE_FILESYSTEM=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s WASM=1 \
