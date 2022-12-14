@@ -1,6 +1,6 @@
 # LibTIFF-wasm.js
 
-`LibTIFF-wasm.js` is an unofficial port of [LibTIFF](http://www.libtiff.org/) to WebAssembly using [Emscripten](https://emscripten.org/).
+`LibTIFF-wasm.js` is an unofficial port of [LibTIFF](http://www.simplesystems.org/libtiff/) to WebAssembly using [Emscripten](https://emscripten.org/).
 
 ## Build
 
