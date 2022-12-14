@@ -1,9 +1,6 @@
 #!/bin/bash
 
 export EMCC_CFLAGS="-O2"
-ZLIB_PKGVER=1.2.11
-LIBTIFF_PKGVER=4.0.10
-LIBJPEG_PKGVER=9c
 
 SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TMP_DIR="/tmp/libtiff"
