@@ -4,10 +4,13 @@ export EMCC_CFLAGS="-O2"
 ZLIB_PKGVER=1.2.11
 LIBTIFF_PKGVER=4.0.10
 LIBJPEG_PKGVER=9c
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-emcc -o tiff.raw.js \
-    -I ./tiff-${LIBTIFF_PKGVER}/libtiff \
+SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TMP_DIR="/tmp/libtiff"
+OUTPUT_DIR="/out"
+
+emcc -o ${OUTPUT_DIR}/libtiff-wasm.raw.js \
+    -I ${TMP_DIR}/tiff-${LIBTIFF_PKGVER}/libtiff \
     --memory-init-file 0 \
     --bind -l"workerfs.js" \
     -s FORCE_FILESYSTEM=1 \
@@ -35,8 +38,8 @@ emcc -o tiff.raw.js \
 "'_SetDirectory',"\
 "'_LastDirectory']"\
     -s EXPORTED_RUNTIME_METHODS="['FS', 'cwrap', 'ccall']" \
-    export.c \
-    tiff-${LIBTIFF_PKGVER}/libtiff/.libs/libtiff.a \
-    zlib-${ZLIB_PKGVER}/libz.a \
-    jpeg-${LIBJPEG_PKGVER}/.libs/libjpeg.a
+    ${SRC_DIR}/export.c \
+    ${TMP_DIR}/tiff-${LIBTIFF_PKGVER}/libtiff/.libs/libtiff.a \
+    ${TMP_DIR}/zlib-${ZLIB_PKGVER}/libz.a \
+    ${TMP_DIR}/jpeg-${LIBJPEG_PKGVER}/.libs/libjpeg.a
 

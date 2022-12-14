@@ -18,3 +18,6 @@ tiff.min.js
 tiff_tag.*
 
 node_modules/
+out/libtiff-wasm.raw.js
+.gitignore
+out/libtiff-wasm.raw.wasm

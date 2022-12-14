@@ -1,4 +1,4 @@
-var TiffTag = {
+export const TiffTag = {
     SUBFILETYPE: 254,
     OSUBFILETYPE: 255,
     IMAGEWIDTH: 256,
@@ -195,7 +195,7 @@ var TiffTag = {
     WEBP_LOSSLESS: 65569
 };
 
-var TiffSampleFormat = {
+export const TiffSampleFormat = {
     UNSPECIFIED: 0,
     UINT: 1,
     INT: 2,
@@ -205,28 +205,31 @@ var TiffSampleFormat = {
     COMPLEXIEEEFP: 6
 };
 
-var TIFFOpen = Module.cwrap("TIFFOpen", "number", ["string", "string"]);
+export const TIFFOpen = Module.cwrap("TIFFOpen", "number", ["string", "string"]);
 
-var TIFFClose = Module.cwrap("TIFFClose", "number", ["number"]);
+export const TIFFClose = Module.cwrap("TIFFClose", "number", ["number"]);
 
-var TIFFNumberOfStrips = Module.cwrap("TIFFNumberOfStrips", "number", ["number"]);
+export const TIFFNumberOfStrips = Module.cwrap("TIFFNumberOfStrips", "number", ["number"]);
 
-var TIFFStripSize = Module.cwrap("TIFFStripSize", "number", ["number"]);
+export const TIFFStripSize = Module.cwrap("TIFFStripSize", "number", ["number"]);
 
-var TIFFReadEncodedStrip = Module.cwrap("TIFFReadEncodedStrip", "number",
-        ["number", "number", "number", "number"]);
+export const TIFFReadEncodedStrip = Module.cwrap("TIFFReadEncodedStrip", "number",
+    ["number", "number", "number", "number"]);
 
-var TIFFMalloc = Module.cwrap("_TIFFmalloc", "number", ["number"]);
+export const TIFFMalloc = Module.cwrap("_TIFFmalloc", "number", ["number"]);
 
-var TIFFFree = Module.cwrap("_TIFFfree", "number", ["number"]);
+export const TIFFFree = Module.cwrap("_TIFFfree", "number", ["number"]);
 
-var TIFFGetField = Module.cwrap("GetField", "number", ["number", "number"]);
+export const TIFFGetField = Module.cwrap("GetField", "number", ["number", "number"]);
 
-var TIFFLastDirectory = Module.cwrap("LastDirectory", "number", ["number"]);
+export const TIFFLastDirectory = Module.cwrap("LastDirectory", "number", ["number"]);
 
-var TIFFReadDirectory = Module.cwrap("ReadDirectory", "number", ["number"]);
+export const TIFFReadDirectory = Module.cwrap("ReadDirectory", "number", ["number"]);
 
-var TIFFSetDirectory = Module.cwrap("SetDirectory", "number", ["number", "number"]);
+export const TIFFSetDirectory = Module.cwrap("SetDirectory", "number", ["number", "number"]);
 
-var TIFFGetStringField = Module.cwrap("GetStringField", "string", ["number", "number"]);
+export const TIFFGetStringField = Module.cwrap("GetStringField", "string", ["number", "number"]);
 
+export const TIFFReadRGBAImage = Module.cwrap("TIFFReadRGBAImage", "number", ["number", "number", "number", "number", "number"]);
+
+export const TIFFReadRGBAImageOriented = Module.cwrap("TIFFReadRGBAImage", "number", ["number", "number", "number", "number", "number", "number"]);

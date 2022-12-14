@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>wasm-vips</title>
+</head>
+
+<body>
+
+    <input type="file" id="image" name="image" accept="image/tif, image/tiff">
+
+</body>
+
+<script src="/out/libtiff-wasm.raw.js"></script>
+<script type="module">
+    import { TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImage, TIFFGetField, TIFFMalloc, TIFFFree } from './out/libtiff-wasm.js';
+
+    document.querySelector('input').addEventListener('change', async (event) => {
+        const disposables = [];
+        try {
+            const buffer = await event.target.files[0].arrayBuffer();
+            const fname = "image"
+            FS.createDataFile("/", fname, new Uint8Array(buffer), true, false);
+            disposables.push(() => FS.unlink("/" + fname));
+            // The following code is a port of the [TIFFRGBAImage Support] example from http://www.libtiff.org/libtiff.html
+
+            const tif = TIFFOpen(fname, "r");
+            disposables.push(() => TIFFClose(tif));
+            const orientation = TIFFGetField(tif, TiffTag.ORIENTATION);
+            console.log("Original Orientation: " + orientation);
+            const width = TIFFGetField(tif, TiffTag.IMAGEWIDTH);
+            const height = TIFFGetField(tif, TiffTag.IMAGELENGTH);
+            const nrOfPixels = width * height;
+            const uint32Size = 4;
+            const raster = TIFFMalloc(nrOfPixels * uint32Size); // output will be RGBA
+            if (!raster) {
+                throw 'TIFFMalloc failed';
+            }
+
+            disposables.push(() => TIFFFree(raster));
+
+            const stopOnError = true;
+            console.log("Reading tiff image");
+            if (TIFFReadRGBAImage(tif, width, height, raster, stopOnError)) {
+                console.log("Creating Uint8ClampedArray");
+                // const data = HEAPU8.subarray(raster, raster + width * height * 4);
+                // const data = new Uint8ClampedArray(Module.HEAPU8.buffer, raster, nrOfPixels * uint32Size);
+                // console.log("Creating ImageData");
+                // const imageData = new ImageData(data, width, height);
+                console.log("Creating Canvas");
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                document.body.appendChild(canvas);
+                const ctx = canvas.getContext("2d");
+                const image = ctx.getImageData(0, 0, width, height);
+                image.data.set(HEAPU8.subarray(raster, raster + width * height * 4));
+                ctx.putImageData(image, 0, 0);
+            }
+            else {
+                throw "TIFFReadRGBAImage failed";
+            }
+        }
+        finally {
+            while (disposables.length > 0) {
+                const disposable = disposables.pop();
+                disposable();
+            }
+        }
+    }, false)
+</script>
+
+</html>
