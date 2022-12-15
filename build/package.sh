@@ -10,9 +10,13 @@ emcc -o ${OUTPUT_DIR}/libtiff-wasm.raw.js \
     -I ${TMP_DIR}/tiff-${LIBTIFF_PKGVER}/libtiff \
     --memory-init-file 0 \
     --bind -l"workerfs.js" \
+    -s EXPORT_ES6=1 \
+    -s MODULARIZE=1 \
+    -s EXPORT_NAME=libtiffwasm \
     -s FORCE_FILESYSTEM=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s WASM=1 \
+    -s ENVIRONMENT=web \
     -s EXPORTED_FUNCTIONS="["\
 "'_TIFFOpen',"\
 "'_TIFFClose',"\
