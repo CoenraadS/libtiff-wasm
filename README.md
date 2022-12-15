@@ -18,7 +18,6 @@ out
  This can be used like:
  
  ```
-<script src="/out/libtiff-wasm.raw.js"></script>
 <script type="module">
     import * from './out/libtiff-wasm.js';
     // Your code here

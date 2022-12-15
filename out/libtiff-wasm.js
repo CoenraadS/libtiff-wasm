@@ -1,3 +1,9 @@
+import libtiffwasm from './libtiff-wasm.raw.js';
+
+export const Module = await libtiffwasm();
+
+export const FS = Module.FS;
+
 export const TiffTag = {
     SUBFILETYPE: 254,
     OSUBFILETYPE: 255,

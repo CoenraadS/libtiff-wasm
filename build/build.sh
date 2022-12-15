@@ -17,7 +17,7 @@ mkdir -p ${TMP_DIR}
 cd ${TMP_DIR}
 
 # build zlib
-if [ ! -f "/${ZLIB_PKGVER}.tar.gz" ]
+if [ ! -f "./zlib-${ZLIB_PKGVER}.tar.gz" ]
 then
     wget http://zlib.net/fossils/zlib-${ZLIB_PKGVER}.tar.gz
 fi
@@ -28,7 +28,7 @@ emmake make
 cd ..
 
 # build libjpeg
-if [ ! -f "/jpegsrc.v${LIBJPEG_PKGVER}.tar.gz" ]
+if [ ! -f "./jpegsrc.v${LIBJPEG_PKGVER}.tar.gz" ]
 then
 wget http://www.ijg.org/files/jpegsrc.v${LIBJPEG_PKGVER}.tar.gz
 fi
@@ -40,7 +40,7 @@ emmake make
 cd ..
 
 # # build libtiff
-if [ ! -f "/tiff-${LIBTIFF_PKGVER}.tar.gz" ]
+if [ ! -f "./tiff-${LIBTIFF_PKGVER}.tar.gz" ]
 then
 wget http://download.osgeo.org/libtiff/tiff-${LIBTIFF_PKGVER}.tar.gz
 fi

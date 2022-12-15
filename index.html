@@ -10,9 +10,8 @@
     <canvas id="canvas"></canvas>
 </body>
 
-<script src="/out/libtiff-wasm.raw.js"></script>
 <script type="module">
-    import { TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImageOriented, TIFFGetField, TIFFMalloc, TIFFFree } from './out/libtiff-wasm.js';
+    import { FS, Module, TiffTag, TIFFOpen, TIFFClose, TIFFReadRGBAImageOriented, TIFFGetField, TIFFMalloc, TIFFFree } from './out/libtiff-wasm.js';
 
     document.querySelector('input').addEventListener('change', async (event) => {
         const disposables = [];
@@ -30,6 +29,7 @@
 
             const width = TIFFGetField(tif, TiffTag.IMAGEWIDTH);
             const height = TIFFGetField(tif, TiffTag.IMAGELENGTH);
+            const orientation = TIFFGetField(tif, TiffTag.ORIENTATION) || 1;
             const nrOfPixels = width * height;
             const uint32Size = 4;
             const raster = TIFFMalloc(nrOfPixels * uint32Size); // output will be RGBA
@@ -42,7 +42,7 @@
 
             const stopOnError = true;
 
-            if (!TIFFReadRGBAImageOriented(tif, width, height, raster, 1, stopOnError)) {
+            if (!TIFFReadRGBAImageOriented(tif, width, height, raster, orientation, stopOnError)) {
                 throw "TIFFReadRGBAImage failed";
             }
 
