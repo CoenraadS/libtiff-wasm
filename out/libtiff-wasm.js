@@ -4,6 +4,23 @@ export const Module = await libtiffwasm();
 
 export const FS = Module.FS;
 
+/**
+ * TIFFTAG_ORIENTATION
+ * @readonly
+ * @enum {number}
+ */
+export const Orientation = {
+    ORIENTATION_TOPLEFT: 1,
+    ORIENTATION_TOPRIGHT: 2,
+    ORIENTATION_BOTRIGHT: 3,
+    ORIENTATION_BOTLEFT: 4
+}
+
+/**
+ * TIFF Tags
+ * @readonly
+ * @enum {number}
+ */
 export const TiffTag = {
     SUBFILETYPE: 254,
     OSUBFILETYPE: 255,
@@ -211,31 +228,124 @@ export const TiffSampleFormat = {
     COMPLEXIEEEFP: 6
 };
 
+/**
+ * TIFFOpen opens a TIFF file whose name is filename and returns a handle to be used in subsequent calls to routines in libtiff. If the open operation fails, then zero is returned. The mode parameter specifies if the file is to be opened for reading (`r`), writing (`w`), or appending (`a`).
+ * http://www.libtiff.org/man/TIFFOpen.3t.html
+ * @type {(fileName: string, mode: string) => number | null}
+ * @param fileName FileName
+ * @param mode Mode
+ * @return Upon successful completion TIFFOpen, return a TIFF pointer. Otherwise, NULL is returned.
+*/
 export const TIFFOpen = Module.cwrap("TIFFOpen", "number", ["string", "string"]);
 
+/**
+ * TIFFClose - close a previously opened TIFF file.
+ * http://www.libtiff.org/man/TIFFClose.3t.html
+ * @type {(tif: number) => number}
+ * @param tif A TIFF pointer.
+*/
 export const TIFFClose = Module.cwrap("TIFFClose", "number", ["number"]);
 
+/**
+ * TIFFNumberOfStrips returns the number of strips in the image.
+ * http://www.libtiff.org/man/TIFFstrip.3t.html
+ * @type {(tif: number) => number}
+ * @param tif A TIFF pointer.
+ * @return The number of strips in the image.
+*/
 export const TIFFNumberOfStrips = Module.cwrap("TIFFNumberOfStrips", "number", ["number"]);
 
+/**
+ * TIFFStripSize returns the equivalent size for a strip of data as it would be returned in a call to TIFFReadEncodedStrip or as it would be expected in a call to TIFFWriteEncodedStrip.
+ * http://www.libtiff.org/man/TIFFstrip.3t.html
+ * @type {(tif: number) => number}
+ * @param tif A TIFF pointer.
+ * @return The size of a strip of data.
+*/
 export const TIFFStripSize = Module.cwrap("TIFFStripSize", "number", ["number"]);
 
+/**
+ * TIFFReadEncodedStrip - read and decode a strip of data from an open TIFF file.
+ * http://www.libtiff.org/man/TIFFReadEncodedStrip.3t.html
+ * @type {(tif: number, strip: number, data: number, size: number) => number}
+ * @param tif A TIFF pointer.
+ * @return The actual number of bytes of data that were placed in buf is returned; Returns -1 if an error was encountered.
+*/
 export const TIFFReadEncodedStrip = Module.cwrap("TIFFReadEncodedStrip", "number",
     ["number", "number", "number", "number"]);
 
+/**
+ * TIFFmalloc is used to dynamically allocate and reallocate memory used by libtiff; such as memory passed into the I/O routines. Memory allocated through these interfaces is released back to the system using the TIFFfree routine.
+ * https://linux.die.net/man/3/tiffmalloc
+ * @type {(size: number) => number | null}
+ * @return Null on failure
+*/
 export const TIFFMalloc = Module.cwrap("_TIFFmalloc", "number", ["number"]);
 
+/**
+ * TIFFmalloc is used to dynamically allocate and reallocate memory used by libtiff; such as memory passed into the I/O routines. Memory allocated through these interfaces is released back to the system using the TIFFfree routine.
+ * https://linux.die.net/man/3/tifffree
+ * @type {(size: number) => number | null}
+*/
 export const TIFFFree = Module.cwrap("_TIFFfree", "number", ["number"]);
 
+/**
+ * TIFFGetField returns the value of a tag or pseudo-tag associated with the the current directory of the open TIFF file tif.
+ * http://www.libtiff.org/man/TIFFGetField.3t.html
+ * @type {(tif: number, tifTag: TiffTag) => number}
+*/
 export const TIFFGetField = Module.cwrap("GetField", "number", ["number", "number"]);
 
+/**
+ * TIFFLastDirectory returns a non-zero value if the current directory is the last directory in the file; otherwise zero is returned.
+ * http://www.libtiff.org/man/TIFFquery.3t.html
+ * @type {(tif: number) => number}
+ * @param tif A TIFF pointer.
+*/
 export const TIFFLastDirectory = Module.cwrap("LastDirectory", "number", ["number"]);
 
+/**
+ * Read the next directory in the specified file and make it the current directory. Applications only need to call TIFFReadDirectory to read multiple subfiles in a single TIFF file-- the first directory in a file is automatically read when TIFFOpen is called.
+ * http://www.libtiff.org/man/TIFFquery.3t.html
+ * @type {(tif: number) => number}
+ * @param tif A TIFF pointer.
+ * @return If the next directory was successfully read, 1 is returned. Otherwise, 0 is returned if an error was encountered, or if there are no more directories to be read.
+*/
 export const TIFFReadDirectory = Module.cwrap("ReadDirectory", "number", ["number"]);
 
+/**
+ * Read the next directory in the specified file and make it the current directory. Applications only need to call TIFFReadDirectory to read multiple subfiles in a single TIFF file-- the first directory in a file is automatically read when TIFFOpen is called.
+ * http://www.libtiff.org/man/TIFFSetDirectory.3t.html
+ * @type {(tif: number, dirnum: number) => number}
+ * @param tif A TIFF pointer.
+ * @param dirnum Specifies the subfile/directory as an integer number, with the first directory numbered zero.
+ * @return On successful return 1 is returned. Otherwise, 0 is returned if dirnum specifies a non-existent directory, or if an error was encountered while reading the directory's contents.
+*/
 export const TIFFSetDirectory = Module.cwrap("SetDirectory", "number", ["number", "number"]);
 
+/**
+ * A wrapper around TIFFGetField to retrieve content as string.
+ * http://www.libtiff.org/man/TIFFGetField.3t.html
+ * @type {(tif: number, tifTag: TiffTag) => string}
+*/
 export const TIFFGetStringField = Module.cwrap("GetStringField", "string", ["number", "number"]);
 
+/**
+ * TIFFReadRGBAImage reads a strip- or tile-based image into memory, storing the result in the user supplied raster.
+ * http://www.libtiff.org/man/TIFFReadRGBAImage.3t.html
+ * @type {(tif: number, width: number, height: number, raster: number, stopOnError: true) => number}
+ * @param tif A TIFF pointer.
+ * @param stopOnError specifies how to act if an error is encountered while reading the image. If stopOnError is non-zero, then an error will terminate the operation; otherwise TIFFReadRGBAImage will continue processing data until all the possible data in the image have been requested.
+ * @return 1 is returned if the image was successfully read and converted. Otherwise, 0 is returned if an error was encountered and stopOnError is zero.
+*/
 export const TIFFReadRGBAImage = Module.cwrap("TIFFReadRGBAImage", "number", ["number", "number", "number", "number", "number"]);
 
+/**
+ * TIFFReadRGBAImageOriented reads a strip- or tile-based image into memory, storing the result in the user supplied raster.
+ * http://www.libtiff.org/man/TIFFReadRGBAImage.3t.html
+ * @type {(tif: number, width: number, height: number, raster: number, orientation: Orientation, stopOnError: true) => number}
+ * @param tif A TIFF pointer.
+ * @param stopOnError specifies how to act if an error is encountered while reading the image. If stopOnError is non-zero, then an error will terminate the operation; otherwise TIFFReadRGBAImage will continue processing data until all the possible data in the image have been requested.
+ * @return 1 is returned if the image was successfully read and converted. Otherwise, 0 is returned if an error was encountered and stopOnError is zero.
+*/
 export const TIFFReadRGBAImageOriented = Module.cwrap("TIFFReadRGBAImageOriented", "number", ["number", "number", "number", "number", "number", "number"]);
