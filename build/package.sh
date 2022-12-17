@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export EMCC_CFLAGS="-O2"
+export EMCC_CFLAGS="-O3"
 
 SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TMP_DIR="/tmp/libtiff"
