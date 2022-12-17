@@ -10,10 +10,20 @@ export const FS = Module.FS;
  * @enum {number}
  */
 export const Orientation = {
-    ORIENTATION_TOPLEFT: 1,
-    ORIENTATION_TOPRIGHT: 2,
-    ORIENTATION_BOTRIGHT: 3,
-    ORIENTATION_BOTLEFT: 4
+    TOPLEFT: 1,
+    TOPRIGHT: 2,
+    BOTRIGHT: 3,
+    BOTLEFT: 4
+}
+
+/**
+ * TIFFTAG_PLANARCONFIG
+ * @readonly
+ * @enum {number}
+ */
+export const PlanarConfiguration = {
+    CONTIF: 1,
+    SEPERATE: 2,
 }
 
 /**
