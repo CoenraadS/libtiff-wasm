@@ -15,6 +15,10 @@ import {
     TIFFNumberOfStrips
 } from './out/libtiff-wasm.js';
 
+/** @type {HTMLInputElement} */
+// @ts-ignore
+const linmap = document.getElementById('linmap');
+
 document.querySelector('input').addEventListener('change', async (event) => {
     /** @type {(() => void)[]} */
     const disposables = [];
@@ -44,7 +48,7 @@ document.querySelector('input').addEventListener('change', async (event) => {
         const planarConfig = TIFFGetField(tif, TiffTag.PLANARCONFIG);
 
         let data = null;
-        if (bitsPerSample === 16 && samplesPerPixel === 1 && planarConfig == PlanarConfiguration.CONTIF) {
+        if (linmap.checked && bitsPerSample === 16 && samplesPerPixel === 1 && planarConfig == PlanarConfiguration.CONTIF) {
             data = linearMap16bitTo8bit(width, height, bytesPerSample, tif, disposables);
         }
         else {

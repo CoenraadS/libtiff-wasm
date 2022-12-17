@@ -5,8 +5,11 @@
     <title>LibTIFF-wasm</title>
 </head>
 
-<body>
-    <input type="file" id="image" name="image" accept="image/tif, image/tiff" style="display: block">
+<body style="margin: 0; padding: 0; border: 0; outline: 0;">
+    <input type="file" id="image" name="image" accept="image/tif, image/tiff">
+    <input type="checkbox" id="linmap">
+    <label for="linmap">Apply contrast equalization (linear mapping) to uint16 files</label>
+    <br>
     <canvas id="canvas"></canvas>
 </body>
 
