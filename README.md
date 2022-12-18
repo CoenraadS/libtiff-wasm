@@ -32,7 +32,7 @@ Run `build.sh`
 
 ## Demo
 
-Launch `index.html` in a browser for a basic file picker demo to display a TIFF image
+Serve `demo/index.html` for a basic file picker demo to display a TIFF image
 
 ## License
 
