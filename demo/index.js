@@ -12,14 +12,16 @@ import {
     PlanarConfiguration,
     TIFFStripSize,
     TIFFReadEncodedStrip,
-    TIFFNumberOfStrips
+    TIFFNumberOfStrips,
+    SampleFormat
 } from '../out/libtiff-wasm.js';
+import quartile from './quartile.js';
 
 /** @type {HTMLInputElement} */
 // @ts-ignore
-const linmap = document.getElementById('linmap');
+const customParsing = document.getElementById('customParse');
 
-linmap.addEventListener('change', (event) => {
+customParsing.addEventListener('change', (event) => {
     if (previousEvent) {
         handleEvent(previousEvent);
     }
@@ -33,11 +35,12 @@ const handleEvent = async (event) => {
     try {
         // @ts-ignore
         const buffer = await event.target.files[0].arrayBuffer();
+        console.log("%c Loading " + event.target.files[0].name, 'background: #F8F8F8')
         const fname = "image"
         FS.createDataFile("/", fname, new Uint8Array(buffer), true, false);
         disposables.push(() => FS.unlink("/" + fname));
 
-        console.time("Tiff Read");
+        console.time("Total Processing");
         const tif = TIFFOpen(fname, "r");
         if (!tif) {
             console.log("TIFFOpen failed");
@@ -52,16 +55,50 @@ const handleEvent = async (event) => {
         const width = TIFFGetField(tif, TiffTag.IMAGEWIDTH);
         const height = TIFFGetField(tif, TiffTag.IMAGELENGTH);
         const planarConfig = TIFFGetField(tif, TiffTag.PLANARCONFIG);
+        const sampleFormat = TIFFGetField(tif, TiffTag.SAMPLEFORMAT) || SampleFormat.UINT;
 
         let data = null;
-        if (linmap.checked && bitsPerSample === 16 && samplesPerPixel === 1 && planarConfig == PlanarConfiguration.CONTIF) {
-            data = linearMap16bitTo8bit(width, height, bytesPerSample, tif, disposables);
+        if (customParsing.checked) {
+            if (samplesPerPixel !== 1) {
+                throw `Unexpected Samples Per Pixel. Expected: 1. Actual ${samplesPerPixel}`;
+            }
+
+            if (planarConfig !== PlanarConfiguration.CONTIF) {
+                throw `Unexpected Planar Configuration. Expected: 1. Actual ${planarConfig}`;
+            }
+
+            // UINT8 support
+            if (bitsPerSample == 8 && sampleFormat == SampleFormat.UINT) {
+                const createView = (uint8Arr) => uint8Arr;
+                data = linearMap(width, height, bytesPerSample, tif, createView, null, null, disposables);
+            }
+            // UINT16 support
+            else if (bitsPerSample === 16 && sampleFormat == SampleFormat.UINT) {
+                const createView = (uint8Arr) => new Uint16Array(uint8Arr.buffer);
+                data = linearMap(width, height, bytesPerSample, tif, createView, null, null, disposables);
+            }
+            // UINT32 support
+            else if (bitsPerSample === 32 && sampleFormat == SampleFormat.UINT) {
+                const createView = (uint8Arr) => new Uint32Array(uint8Arr.buffer);
+                data = linearMap(width, height, bytesPerSample, tif, createView, null, null, disposables);
+            }
+            // Float32 support
+            else if (bitsPerSample === 32 && sampleFormat == SampleFormat.IEEEFP) {
+                const minPercentile = 0.1;
+                const maxPercentile = 0.99;
+                const createView = (uint8Arr) => new Float32Array(uint8Arr.buffer);
+                data = linearMap(width, height, bytesPerSample, tif, createView, minPercentile, maxPercentile, disposables);
+            }
+            else {
+                throw `No custom parser registered for format with BitsPerSample: ${bitsPerSample} and SampleFormat: ${sampleFormat}`
+            }
         }
         else {
+            // Default LibTiff reader
             data = readRGBA(tif, width, height, disposables);
         }
 
-        console.timeEnd("Tiff Read");
+        console.timeEnd("Total Processing");
         console.time("Tiff Display");
 
         const imageData = new ImageData(data, width, height);
@@ -93,7 +130,8 @@ document.querySelector('input').addEventListener('change', handleEvent, false)
  * @param {number} tif
  * @param {(() => void)[]} disposables
  */
-function linearMap16bitTo8bit(width, height, bytesPerSample, tif, disposables) {
+function getImageBuffer(width, height, bytesPerSample, tif, disposables) {
+    console.time("GetBuffer");
     const imageBuffer = new Uint8Array(width * height * bytesPerSample);
     const stripBuffer = TIFFMalloc(TIFFStripSize(tif));
     if (!stripBuffer) {
@@ -113,29 +151,81 @@ function linearMap16bitTo8bit(width, height, bytesPerSample, tif, disposables) {
         const stripData = new Uint8Array(Module.HEAPU8.buffer, stripBuffer, read);
         imageBuffer.set(stripData, s * rowsPerStrip * width * bytesPerSample);
     }
+    console.timeEnd("GetBuffer");
+    return imageBuffer;
+}
 
-    const imageView16Bit = new Uint16Array(imageBuffer.buffer);
-    let max = Number.NEGATIVE_INFINITY;
-    let min = Number.POSITIVE_INFINITY;
+/**
+ * @param {number} width
+ * @param {number} height
+ * @param {number} bytesPerSample
+ * @param {number} tif
+ * @param {(() => void)[]} disposables
+ */
+function linearMap(width, height, bytesPerSample, tif, createView, minPercentile, maxPercentile, disposables) {
+    const imageBuffer = getImageBuffer(width, height, bytesPerSample, tif, disposables);
 
-    for (let i = 0; i < imageView16Bit.length; i++) {
-        if (imageView16Bit[i] > max) {
-            max = imageView16Bit[i];
+    const imageView = createView(imageBuffer);
+    let min, max;
+
+    if (minPercentile && maxPercentile) {
+        console.time("Percentile");
+        const sorted = imageView.slice().sort();
+
+        const lowerBound = quartile(sorted, 0.1);
+        const upperBound = quartile(sorted, 0.99);
+
+        console.timeEnd("Percentile");
+
+        max = upperBound;
+        min = lowerBound;
+
+        console.time("Clamp");
+
+        for (let i = 0; i < imageView.length; i++) {
+            if (imageView[i] > max) {
+                imageView[i] = max;
+                continue;
+            }
+
+            if (imageView[i] < min) {
+                imageView[i] = min;
+            }
         }
 
-        if (imageView16Bit[i] < min) {
-            min = imageView16Bit[i];
-        }
+        console.timeEnd("Clamp");
     }
+    else {
+        max = Number.NEGATIVE_INFINITY;
+        min = Number.POSITIVE_INFINITY;
+
+        console.time("Min/Max");
+
+        for (let i = 0; i < imageView.length; i++) {
+            if (imageView[i] > max) {
+                max = imageView[i];
+            }
+
+            if (imageView[i] < min) {
+                min = imageView[i];
+            }
+        }
+
+        console.timeEnd("Min/Max");
+    }
+
+    console.time("ToRGBA");
 
     const imageRgba = new Uint8ClampedArray(width * height * 4);
     const view32Bit = new Uint32Array(imageRgba.buffer);
     const range = max - min;
     const alpha = 0xFF000000;
-    for (let i = 0; i < imageView16Bit.length; i++) {
-        const gray8BitValue = 255 * ((imageView16Bit[i] - min) / range);
+    for (let i = 0; i < imageView.length; i++) {
+        const gray8BitValue = 255 * ((imageView[i] - min) / range);
         view32Bit[i] = alpha + (gray8BitValue << 16) + (gray8BitValue << 8) + gray8BitValue;
     }
+
+    console.timeEnd("ToRGBA");
     return imageRgba;
 }
 
