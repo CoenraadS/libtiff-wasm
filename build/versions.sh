@@ -4,7 +4,7 @@
 declare -x ZLIB_PKGVER=1.2.13
 
 # http://www.simplesystems.org/libtiff/
-declare -x LIBTIFF_PKGVER=4.4.0
+declare -x LIBTIFF_PKGVER=4.5.0
 
 # https://ijg.org/
 declare -x LIBJPEG_PKGVER=9e

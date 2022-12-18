@@ -43,4 +43,3 @@ emcc -o ${OUTPUT_DIR}/libtiff-wasm.raw.js \
     ${TMP_DIR}/tiff-${LIBTIFF_PKGVER}/libtiff/.libs/libtiff.a \
     ${TMP_DIR}/zlib-${ZLIB_PKGVER}/libz.a \
     ${TMP_DIR}/jpeg-${LIBJPEG_PKGVER}/.libs/libjpeg.a
-

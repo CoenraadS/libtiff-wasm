@@ -47,6 +47,10 @@ fi
 tar xzvf tiff-${LIBTIFF_PKGVER}.tar.gz
 cd tiff-${LIBTIFF_PKGVER}
 emconfigure ./configure \
+            --disable-tools \
+            --disable-tests \
+            --disable-contrib \
+            --disable-docs \
             --with-zlib-include-dir=${TMP_DIR}/zlib-${ZLIB_PKGVER}/ \
             --with-zlib-lib-dir=${TMP_DIR}/zlib-${ZLIB_PKGVER}/ \
             --with-jpeg-include-dir=${TMP_DIR}/jpeg-${LIBJPEG_PKGVER}/ \
