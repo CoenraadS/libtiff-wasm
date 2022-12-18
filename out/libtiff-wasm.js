@@ -5,6 +5,20 @@ export const Module = await libtiffwasm();
 export const FS = Module.FS;
 
 /**
+ * TIFFTAG_SAMPLEFORMAT
+ * @readonly
+ * @enum {number}
+ */
+export const SampleFormat = {
+    UINT: 1,
+    INT: 2,
+    IEEEFP: 3,
+    VOID: 4,
+    COMPLEXINT: 5,
+    COMPLEXIEEEFP: 6
+}
+
+/**
  * TIFFTAG_ORIENTATION
  * @readonly
  * @enum {number}
