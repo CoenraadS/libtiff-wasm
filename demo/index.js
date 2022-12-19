@@ -15,7 +15,8 @@ import {
     TIFFNumberOfStrips,
     SampleFormat
 } from '../out/libtiff-wasm.js';
-import percentile from './percentile.js';
+import getStatistics from './getStatistics.js';
+
 
 /** @type {HTMLInputElement} */
 // @ts-ignore
@@ -67,28 +68,28 @@ const handleEvent = async (event) => {
                 throw `Unexpected Planar Configuration. Expected: 1. Actual ${planarConfig}`;
             }
 
+            const imageBuffer = getImageBuffer(width, height, bytesPerSample, tif, disposables);
+
             // UINT8 support
             if (bitsPerSample == 8 && sampleFormat == SampleFormat.UINT) {
-                const createView = (uint8Arr) => uint8Arr;
-                data = linearMap(width, height, bytesPerSample, tif, createView, null, null, disposables);
+                const view = imageBuffer;
+                data = linearMap(view, data, width, height);
             }
             // UINT16 support
             else if (bitsPerSample === 16 && sampleFormat == SampleFormat.UINT) {
-                const createView = (uint8Arr) => new Uint16Array(uint8Arr.buffer);
-                data = linearMap(width, height, bytesPerSample, tif, createView, null, null, disposables);
+                const view = new Uint16Array(imageBuffer.buffer);
+                data = linearMap(view, data, width, height);
             }
             // UINT32 support
             else if (bitsPerSample === 32 && sampleFormat == SampleFormat.UINT) {
-                const createView = (uint8Arr) => new Uint32Array(uint8Arr.buffer);
-                data = linearMap(width, height, bytesPerSample, tif, createView, null, null, disposables);
+                const view = new Uint32Array(imageBuffer.buffer);
+                data = linearMap(view, data, width, height);
             }
             // Float32 support
             else if (bitsPerSample === 32 && sampleFormat == SampleFormat.IEEEFP) {
-                const clip = 0.01;
-                const minPercentile = clip;
-                const maxPercentile = 1 - clip;
-                const createView = (uint8Arr) => new Float32Array(uint8Arr.buffer);
-                data = linearMap(width, height, bytesPerSample, tif, createView, minPercentile, maxPercentile, disposables);
+                const view = new Float32Array(imageBuffer.buffer);
+                const minMax = clampAndStandardDeviation(view);
+                data = scaleToUint8AndConvertToRGBA(width, height, view, minMax.min, minMax.max);
             }
             else {
                 throw `No custom parser registered for format with BitsPerSample: ${bitsPerSample} and SampleFormat: ${sampleFormat}`
@@ -124,6 +125,12 @@ const handleEvent = async (event) => {
 
 document.querySelector('input').addEventListener('change', handleEvent, false)
 
+function linearMap(view, data, width, height) {
+    const minMax = findMinMax(view);
+    data = scaleToUint8AndConvertToRGBA(width, height, view, minMax.min, minMax.max);
+    return data;
+}
+
 /**
  * @param {number} width
  * @param {number} height
@@ -156,78 +163,91 @@ function getImageBuffer(width, height, bytesPerSample, tif, disposables) {
     return imageBuffer;
 }
 
-/**
- * @param {number} width
- * @param {number} height
- * @param {number} bytesPerSample
- * @param {number} tif
- * @param {(() => void)[]} disposables
- */
-function linearMap(width, height, bytesPerSample, tif, createView, minPercentile, maxPercentile, disposables) {
-    const imageBuffer = getImageBuffer(width, height, bytesPerSample, tif, disposables);
-
-    const imageView = createView(imageBuffer);
-    let min, max;
-
-    if (minPercentile && maxPercentile) {
-        console.time("Percentile");
-        const sorted = imageView.slice().sort();
-
-        const lowerBound = percentile(sorted, minPercentile);
-        const upperBound = percentile(sorted, maxPercentile);
-
-        console.timeEnd("Percentile");
-
-        max = upperBound;
-        min = lowerBound;
-
-        console.time("Clamp");
-
-        for (let i = 0; i < imageView.length; i++) {
-            if (imageView[i] > max) {
-                imageView[i] = max;
-                continue;
-            }
-
-            if (imageView[i] < min) {
-                imageView[i] = min;
-            }
-        }
-
-        console.timeEnd("Clamp");
-    }
-    else {
-        max = Number.NEGATIVE_INFINITY;
-        min = Number.POSITIVE_INFINITY;
-
-        console.time("Min/Max");
-
-        for (let i = 0; i < imageView.length; i++) {
-            if (imageView[i] > max) {
-                max = imageView[i];
-            }
-
-            if (imageView[i] < min) {
-                min = imageView[i];
-            }
-        }
-
-        console.timeEnd("Min/Max");
-    }
-
+function scaleToUint8AndConvertToRGBA(width, height, imageView, min, max) {
     console.time("ToRGBA");
 
     const imageRgba = new Uint8ClampedArray(width * height * 4);
     const view32Bit = new Uint32Array(imageRgba.buffer);
     const range = max - min;
+
     const alpha = 0xFF000000;
     for (let i = 0; i < imageView.length; i++) {
-        const gray8BitValue = 255 * ((imageView[i] - min) / range);
+        const gray8BitValue = Math.round(255 * ((imageView[i] - min) / range));
         view32Bit[i] = alpha + (gray8BitValue << 16) + (gray8BitValue << 8) + gray8BitValue;
     }
 
     console.timeEnd("ToRGBA");
     return imageRgba;
+}
+
+function findMinMax(imageView) {
+    let max = Number.NEGATIVE_INFINITY;
+    let min = Number.POSITIVE_INFINITY;
+
+    console.time("Min/Max");
+
+    for (let i = 0; i < imageView.length; i++) {
+        if (imageView[i] > max) {
+            max = imageView[i];
+        }
+
+        if (imageView[i] < min) {
+            min = imageView[i];
+        }
+    }
+
+    console.timeEnd("Min/Max");
+    return { min, max };
+}
+
+function clampAndStandardDeviation(imageView) {
+    console.time("Clamp lowerbound to 0");
+
+    for (let i = 0; i < imageView.length; i++) {
+        if (imageView[i] < 0) {
+            imageView[i] = 0;
+        }
+    }
+
+    console.timeEnd("Clamp lowerbound to 0");
+
+    console.time("Statistics");
+    const stats = getStatistics(imageView);
+    console.timeEnd("Statistics");
+
+    const std = stats.std;
+    const mean = stats.mean;
+
+    const sigma = 3;
+    const upperBound = mean + sigma * std;
+    const lowerBound = Math.max(0, mean - sigma * std);
+
+    console.log({ std });
+    console.log({ mean });
+    console.log({ lowerBound });
+    console.log({ upperBound });
+
+    const min = lowerBound;
+    const max = upperBound;
+
+    console.time("Clamp");
+
+    if (lowerBound > 0) {
+        for (let i = 0; i < imageView.length; i++) {
+            if (imageView[i] < lowerBound) {
+                imageView[i] = lowerBound;
+            }
+        }
+    }
+
+    for (let i = 0; i < imageView.length; i++) {
+        if (imageView[i] > upperBound) {
+            imageView[i] = upperBound;
+        }
+    }
+
+    console.timeEnd("Clamp");
+    return { min, max };
 }
 
 /**
