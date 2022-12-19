@@ -15,7 +15,7 @@ import {
     TIFFNumberOfStrips,
     SampleFormat
 } from '../out/libtiff-wasm.js';
-import quartile from './quartile.js';
+import percentile from './percentile.js';
 
 /** @type {HTMLInputElement} */
 // @ts-ignore
@@ -84,8 +84,9 @@ const handleEvent = async (event) => {
             }
             // Float32 support
             else if (bitsPerSample === 32 && sampleFormat == SampleFormat.IEEEFP) {
-                const minPercentile = 0.1;
-                const maxPercentile = 0.99;
+                const clip = 0.01;
+                const minPercentile = clip;
+                const maxPercentile = 1 - clip;
                 const createView = (uint8Arr) => new Float32Array(uint8Arr.buffer);
                 data = linearMap(width, height, bytesPerSample, tif, createView, minPercentile, maxPercentile, disposables);
             }
@@ -172,8 +173,8 @@ function linearMap(width, height, bytesPerSample, tif, createView, minPercentile
         console.time("Percentile");
         const sorted = imageView.slice().sort();
 
-        const lowerBound = quartile(sorted, 0.1);
-        const upperBound = quartile(sorted, 0.99);
+        const lowerBound = percentile(sorted, minPercentile);
+        const upperBound = percentile(sorted, maxPercentile);
 
         console.timeEnd("Percentile");
 
