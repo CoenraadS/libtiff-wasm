@@ -15,7 +15,8 @@ import {
     TIFFNumberOfStrips,
     SampleFormat
 } from '../out/libtiff-wasm.js';
-import percentile from './percentile.js';
+import getStatistics from './getStatistics.js';
+
 
 /** @type {HTMLInputElement} */
 // @ts-ignore
@@ -170,27 +171,42 @@ function linearMap(width, height, bytesPerSample, tif, createView, minPercentile
     let min, max;
 
     if (minPercentile && maxPercentile) {
-        console.time("Percentile");
-        const sorted = imageView.slice().sort();
+        console.time("Clamp lowerbound to 0");
 
-        const lowerBound = percentile(sorted, minPercentile);
-        const upperBound = percentile(sorted, maxPercentile);
+        for (let i = 0; i < imageView.length; i++) {
+            if (imageView[i] < 0) {
+                imageView[i] = 0;
+            }
+        }
 
-        console.timeEnd("Percentile");
+        console.timeEnd("Clamp lowerbound to 0");
+
+        console.time("Statistics")
+        const stats = getStatistics(imageView);
+        console.timeEnd("Statistics")
+
+        const std = stats.std;
+        const mean = stats.mean;
+
+        const upperBound = mean + 3 * std;
+        const lowerBound = Math.min(0, mean - 3 * std);
 
         max = upperBound;
         min = lowerBound;
 
         console.time("Clamp");
 
-        for (let i = 0; i < imageView.length; i++) {
-            if (imageView[i] > max) {
-                imageView[i] = max;
-                continue;
+        if (lowerBound > 0) {
+            for (let i = 0; i < imageView.length; i++) {
+                if (imageView[i] < lowerBound) {
+                    imageView[i] = lowerBound;
+                }
             }
+        }
 
-            if (imageView[i] < min) {
-                imageView[i] = min;
+        for (let i = 0; i < imageView.length; i++) {
+            if (imageView[i] > upperBound) {
+                imageView[i] = upperBound;
             }
         }
 
