@@ -169,9 +169,10 @@ function scaleToUint8AndConvertToRGBA(width, height, imageView, min, max) {
     const imageRgba = new Uint8ClampedArray(width * height * 4);
     const view32Bit = new Uint32Array(imageRgba.buffer);
     const range = max - min;
+
     const alpha = 0xFF000000;
     for (let i = 0; i < imageView.length; i++) {
-        const gray8BitValue = 255 * ((imageView[i] - min) / range);
+        const gray8BitValue = Math.round(255 * ((imageView[i] - min) / range));
         view32Bit[i] = alpha + (gray8BitValue << 16) + (gray8BitValue << 8) + gray8BitValue;
     }
 
@@ -219,10 +220,15 @@ function clampAndStandardDeviation(imageView) {
 
     const sigma = 3;
     const upperBound = mean + sigma * std;
-    const lowerBound = Math.min(0, mean - sigma * std);
+    const lowerBound = Math.max(0, mean - sigma * std);
 
-    const max = upperBound;
+    console.log({ std });
+    console.log({ mean });
+    console.log({ lowerBound });
+    console.log({ upperBound });
+
     const min = lowerBound;
+    const max = upperBound;
 
     console.time("Clamp");
 
@@ -241,7 +247,7 @@ function clampAndStandardDeviation(imageView) {
     }
 
     console.timeEnd("Clamp");
-    return { max, min };
+    return { min, max };
 }
 
 /**
