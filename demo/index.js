@@ -201,15 +201,6 @@ function findMinMax(imageView) {
 }
 
 function clampAndStandardDeviation(imageView) {
-    console.time("Clamp lowerbound to 0");
-
-    for (let i = 0; i < imageView.length; i++) {
-        if (imageView[i] < 0) {
-            imageView[i] = 0;
-        }
-    }
-
-    console.timeEnd("Clamp lowerbound to 0");
 
     console.time("Statistics");
     const stats = getStatistics(imageView);
