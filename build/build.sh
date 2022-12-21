@@ -51,6 +51,13 @@ emconfigure ./configure \
             --disable-tests \
             --disable-contrib \
             --disable-docs \
+            --enable-static \
+            --disable-shared \
+            --disable-dependency-tracking \
+            --disable-mdi \
+            --disable-pixarlog \
+            --disable-old-jpeg \
+            --disable-cxx \
             --with-zlib-include-dir=${TMP_DIR}/zlib-${ZLIB_PKGVER}/ \
             --with-zlib-lib-dir=${TMP_DIR}/zlib-${ZLIB_PKGVER}/ \
             --with-jpeg-include-dir=${TMP_DIR}/jpeg-${LIBJPEG_PKGVER}/ \
